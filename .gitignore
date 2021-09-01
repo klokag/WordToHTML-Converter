@@ -66,6 +66,9 @@ __recovery/
 *.*.~*
 *.*.~*~
 
+# Delphi у нас с Никитой могут быть разные среды компилятора и бог с ними не отслеживаем
+*.dproj
+
 
 # Castalia statistics file (since XE7 Castalia is distributed with Delphi)
 *.stat

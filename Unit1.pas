@@ -51,6 +51,100 @@ implementation
 
 {$R *.dfm}
 
+
+/// Start of Custorm procedures
+
+
+function LastPos(const SubStr:String; Str:String):Integer;
+//Аналогичка ф-ии pos, но писк ведёт с конца строки
+begin
+  if not (Str > '') then begin
+    Result:=0;
+    Exit;
+  end;
+  Result:=Length(Str)+1;
+  Dec(Result, Length(SubStr));
+  while Result > 0 do begin
+    if Copy(Str, Result, Length(SubStr)) = SubStr then Exit;
+    Dec(Result, Length(SubStr));
+  end;
+  Result:=0;
+end;
+
+
+function StringToInt(const S: string): Integer;
+begin
+  try
+    Result := StrToInt(S);
+  except
+    Result := 0;
+  end;
+end;
+
+  procedure DelLastSymb(var S: string; Symb: string = '/');
+  //Удаляет из строки S: string, если найден, последний символ = Symb: string
+  begin
+    if Length(S) <= 0 then Exit;
+    if S[Length(S)] = Symb then
+      Delete(S, Length(S), 1);
+  end;
+
+function NewFN(const OldFN: String; const aOverWriteFile: Boolean = False):String;
+//Формирует на базе OldFN имя нового, не существующего файла.
+//Если aOverWriteFile=True - пытается удалить существующий файл
+var
+  S: String;
+  PosFilePoint, PosLastSlash, PosLast_:Integer;
+
+  function FileExists(const FileName: string): Boolean;
+  begin
+    if aOverWriteFile then begin
+      try
+        Result:=SysUtils.DeleteFile(FileName);
+      except
+        Result := False;
+      end;
+    end;
+    Result:=SysUtils.FileExists(FileName) or DirectoryExists(FileName);
+  end;
+begin
+  Result:=OldFN;
+  DelLastSymb(Result, '\');
+
+  while (FileExists(Result)) do begin
+    PosLastSlash:=Length(Result);
+    S := Result;
+    PosFilePoint:=Length(Result)+1;//-1;
+    while PosLastSlash> 0 do begin
+      if (S[PosLastSlash]='.') and (PosFilePoint>=(Length(Result)+1)) then PosFilePoint:=PosLastSlash
+      else if S[PosLastSlash]='\' then break;
+      Dec(PosLastSlash);
+    end;
+    S:=Copy(Result, PosLastSlash+1, PosFilePoint-PosLastSlash-1);
+    PosLast_:=LastPos('_', S);
+    if PosLast_>0 then begin
+      S:=Copy(S, PosLast_+1, Length(S)-PosLast_);
+      if (S = '') or (StringToInt(S) = 0) then begin
+        S:=Result;
+        Insert('_1', S, PosFilePoint);
+        Result:=S;
+      end else begin
+        S:= IntToStr(StringToInt(S)+1);
+        S:= S + Copy(Result, PosFilePoint, Length(Result)-PosFilePoint+1);
+        Result:= Concat(Copy(Result, 0, PosLastSlash+PosLast_), S);
+      end;
+    end else begin
+      S:=Result;
+      Insert('_1', S, PosFilePoint);
+      Result:=S;
+//      Edit1.Text:=Edit1.Text+'_1';
+    end;
+  end;
+
+end;
+/// End of Custorm procedures
+
+
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   W.activedocument.close;
@@ -66,18 +160,25 @@ begin
 end;
 
 procedure TForm1.OpenFile_B1Click(Sender: TObject);
+var
+  sTmpFN: String;
 begin
   // если файл не выбран, то выходим
-  { if (not OD.Execute) or (OD.FileName = '') then
-    exit; }
-
+  if (not OD.Execute) or (OD.FileName = '') then begin
+    ShowMessage('Файл не выбран, выходим....');
+    exit;
+  end;
+  sTmpFN := ChangeFileExt(od.FileName, ' doc_dublicate.docx');
+  sTmpFN := NewFN(sTmpFN);
+  
   // загружаем тестовый документ
   W := CreateOleObject('Word.Application');
-  // W.Documents.Open(OD.FileName, EmptyParam, True);
-  W.Documents.Open('C:\Users\Public\Documents\Практика\test doc.docx',
-    EmptyParam, True);
+  W.Documents.Open(OD.FileName, EmptyParam, True);
+  //W.Documents.Open('C:\Users\Public\Documents\Практика\test doc.docx',
+  //  EmptyParam, True);
   W.activedocument.SaveAs
-    ('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
+    //('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
+    (sTmpFN);
   W.activedocument.close;
   W.Documents.Open
     ('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');

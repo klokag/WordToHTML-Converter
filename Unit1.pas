@@ -3,10 +3,17 @@
 interface
 
 uses
+{$IFDEF VER185}
+  Windows, Messages, SysUtils, Variants,
+  Classes, Graphics,
+  Controls, Forms, Dialogs, StdCtrls, ComObj, OleCtrls,
+  SHDocVw;
+{$ELSE}
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ComObj, Vcl.OleCtrls,
   SHDocVw;
+{$ENDIF}
 
 type
   TForm1 = class(TForm)

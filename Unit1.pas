@@ -110,7 +110,6 @@ begin
     Add('<body>');
     // наполняем body
     WordParsing;
-    Memo1.lines.Add('thats all');
     Add('</body>');
     Add('</html>');
   end;
@@ -222,7 +221,6 @@ var
   i: integer;
   isBold: integer;
 begin
-  Memo1.lines.Add('gogo');
   // обратный цикл по словам в параграфе
   for i := paragraph.words.Count downto 1 do
   begin
@@ -288,15 +286,17 @@ var
 i: integer;
 link: variant;
 begin
-try
+
   for i := 1 to w.activedocument.hyperlinks.count do
   begin
       link := w.activedocument.hyperlinks.item(i);
-      link.range.select
+      link.range.insertbefore('<a HREF = "#' + intToStr(i) + '">');
+      link.range.insertafter('</a>');
+      link.follow;
+      w.selection.insertbefore('<a NAME = "#'+ intToStr(i) + '">');
+      w.selection.insertafter('</a>');
   end;
-finally
 
-end;
 
 end;
 

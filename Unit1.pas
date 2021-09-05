@@ -29,6 +29,7 @@ type
     procedure WordParsing;
     procedure ParagraphParsing(paragraph: variant);
     procedure TableFormatting();
+    procedure Contents();
   end;
 
 var
@@ -100,6 +101,7 @@ begin
   // обращаемся к "html"
   with HTMLFile do
   begin
+    contents();
     // пишем заголовок
     Add('<html>');
     Add('<head>');
@@ -108,7 +110,6 @@ begin
     Add('<body>');
     // наполняем body
     WordParsing;
-    Memo1.lines.Add('thats all');
     Add('</body>');
     Add('</html>');
   end;
@@ -161,12 +162,14 @@ begin
     end;
 
     // если текст жирный, передать абзац в функцию
-    if wordrange.formattedText.bold <> 0 then
+    if (wordrange.formattedText.bold <> 0) and (wordrange.Tables.Count = 0) then
       ParagraphParsing(wordrange);
 
     // если текущий шрифт не совпадает с предыдущим
     if (curFontName <> FontName) or (curFontSize <> FontSize) then
     begin
+      if wordrange.text = #13#7 then continue;
+
       wordrange.insertbefore('<font ' + curFontName + '" size = "' +
         intTOstr(curFontSize) + '">');
       if i <> 1 then
@@ -174,7 +177,6 @@ begin
       FontName := curFontName;
       FontSize := curFontSize;
     end;
-
     //если ныняшняя таблица закончилась, меняем CurTable
     if (CurTable <> TableCount) and (wordrange.Tables.Count = 0) then
     begin
@@ -219,7 +221,6 @@ var
   i: integer;
   isBold: integer;
 begin
-  Memo1.lines.Add('gogo');
   // обратный цикл по словам в параграфе
   for i := paragraph.words.Count downto 1 do
   begin
@@ -279,6 +280,24 @@ begin
   TableCount := TableCount + 1;
 end;
 
+procedure TForm1.Contents();
+var
+i: integer;
+link: variant;
+begin
+
+  for i := 1 to w.activedocument.hyperlinks.count do
+  begin
+      link := w.activedocument.hyperlinks.item(i);
+      link.range.insertbefore('<a HREF = "#' + intToStr(i) + '">');
+      link.range.insertafter('</a>');
+      link.follow;
+      w.selection.insertbefore('<a NAME = "#'+ intToStr(i) + '">');
+      w.selection.insertafter('</a>');
+  end;
+
+
+end;
 end.
 
 {

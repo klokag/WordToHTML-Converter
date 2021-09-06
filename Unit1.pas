@@ -30,6 +30,7 @@ type
     procedure ParagraphParsing(paragraph: variant);
     procedure TableFormatting();
     procedure Contents();
+    procedure Picture();
   end;
 
 var
@@ -40,6 +41,7 @@ var
   W: variant;
   // счетчик таблицы
   TableCount: integer;
+  PictureCount: integer;
 
 implementation
 
@@ -97,6 +99,7 @@ end;
 procedure TForm1.CreateHTMLFile;
 begin
   // очищаем
+  HTMLFile.BeginUpdate;
   HTMLFile.Clear;
   // обращаемся к "html"
   with HTMLFile do
@@ -110,10 +113,10 @@ begin
     Add('<body>');
     // наполняем body
     WordParsing;
-    Memo1.lines.Add('thats all');
     Add('</body>');
     Add('</html>');
   end;
+  HTMLFile.EndUpdate;
 end;
 
 procedure TForm1.WordParsing;
@@ -126,7 +129,9 @@ var
 begin
   listFlag := False; // флаг для проверки списков
   TableCount := 1; // инициализируем счетчик таблиц
+  PictureCount := 1; //текущая картинка
   CurTable := 1; // текущая таблица
+
 
   // цикл по абзацам
   for i := 1 to W.activedocument.Paragraphs.Count do
@@ -209,6 +214,12 @@ begin
       listFlag := False;
     end;
 
+    //если параграф картинка
+    if wordrange.InlineShapes.Count > 0 then
+    begin
+    picture();
+    PictureCount := PictureCount + 1;
+    end;
 
     HTMLFile.Append('<p ALIGN = "' + AlignName + '">' + string(wordrange.Text) + '</p>');
 
@@ -222,7 +233,7 @@ var
   i: integer;
   isBold: integer;
 begin
-  Memo1.lines.Add('gogo');
+  Flag := False;
   // обратный цикл по словам в параграфе
   for i := paragraph.words.Count downto 1 do
   begin
@@ -261,7 +272,6 @@ begin
   for CurrentRow := 1 to TableRowsCount do
   begin
     HTMLFile.Append('<tr>');
-    memo1.lines.Add('im in table');
     for CurrentColumn := 1 to TableColumnsCount do
     begin
       text := W.activedocument.Tables.Item(TableCount)
@@ -288,32 +298,27 @@ var
 i: integer;
 link: variant;
 begin
-try
+
   for i := 1 to w.activedocument.hyperlinks.count do
   begin
       link := w.activedocument.hyperlinks.item(i);
-      link.range.select
+      link.range.insertbefore('<a HREF = "#' + intToStr(i) + '">');
+      link.range.insertafter('</a>');
+      link.follow;
+      w.selection.insertbefore('<a NAME = "#'+ intToStr(i) + '">');
+      w.selection.insertafter('</a>');
   end;
-finally
+
 
 end;
 
+procedure TForm1.Picture();
+var i: integer;
+
+begin
+     htmlFile.Add('<img src = "' + w.activedocument.InlineShapes.Item(PictureCount).
+     LinkFormat.SourceFullName + '">');
 end;
 
 end.
 
-{
-  Надо сделать:
-  1. оглавление
-  2. типы списков
-  3. таблицы
-  4. картинки
-  5. косметика (выравнивание)
-}
-
-{
-hyperlinks(item)
-.follow
-.range.text
-.add anchor
-}

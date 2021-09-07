@@ -136,8 +136,10 @@ begin
   // цикл по абзацам
   for i := 1 to W.activedocument.Paragraphs.Count do
   begin
-    wordrange := W.activedocument.Paragraphs.Item(i).range; // абзац
-
+    wordrange := W.activedocument.range(
+    W.activedocument.Paragraphs.Item(i).range.start, 
+    W.activedocument.Paragraphs.Item(i).range.end - 1); // абзац
+    
     AlignNumb := W.activedocument.Paragraphs.Item(i).Alignment;
     case AlignNumb of
     0:
@@ -150,7 +152,6 @@ begin
     AlignName := 'Justify'
     end;
 
-    wordrange := W.activedocument.Paragraphs.Item(i).range; // абзац
 
     curFontName := string('face = "' + string(wordrange.formattedText.Font.Name)
       + '"'); // название шрифта
@@ -174,15 +175,15 @@ begin
     // если текущий шрифт не совпадает с предыдущим
     if (curFontName <> FontName) or (curFontSize <> FontSize) then
     begin
-      if wordrange.text = #13#7 then continue;
+      wordrange.select;
 
-      wordrange.insertbefore('<font ' + curFontName + '" size = "' +
+      w.selection.insertbefore('<font ' + curFontName + '" size = "' +
         intTOstr(curFontSize) + '">');
       if i <> 1 then
-        wordrange.insertbefore('</font>');
+        w.selection.insertbefore('</font>');
       FontName := curFontName;
       FontSize := curFontSize;
-    end;
+    end;  
     //если ныняшняя таблица закончилась, меняем CurTable
     if (CurTable <> TableCount) and (wordrange.Tables.Count = 0) then
     begin
@@ -221,7 +222,8 @@ begin
     PictureCount := PictureCount + 1;
     end;
 
-    HTMLFile.Append('<p ALIGN = "' + AlignName + '">' + string(wordrange.Text) + '</p>');
+    HTMLFile.Append('<p ALIGN = "' + AlignName + '">' + 
+    string(W.activedocument.Paragraphs.Item(i).range.Text) + '</p>');
 
   end;
   HTMLFile.Append('</font>');

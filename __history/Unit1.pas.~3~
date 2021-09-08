@@ -1,21 +1,12 @@
-﻿{$O-}
-
-unit Unit1;
+﻿unit Unit1;
 
 interface
 
 uses
-{$IFDEF VER185}
-  Windows, Messages, SysUtils, Variants,
-  Classes, Graphics,
-  Controls, Forms, Dialogs, StdCtrls, ComObj, OleCtrls,
-  SHDocVw;
-{$ELSE}
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
   System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, ComObj, Vcl.OleCtrls,
   SHDocVw;
-{$ENDIF}
 
 type
   TForm1 = class(TForm)
@@ -38,8 +29,6 @@ type
     procedure WordParsing;
     procedure ParagraphParsing(paragraph: variant);
     procedure TableFormatting();
-    procedure Contents();
-    procedure Picture();
   end;
 
 var
@@ -50,106 +39,10 @@ var
   W: variant;
   // счетчик таблицы
   TableCount: integer;
-  PictureCount: integer;
 
 implementation
 
 {$R *.dfm}
-
-
-/// Start of Custorm procedures
-
-
-function LastPos(const SubStr:String; Str:String):Integer;
-//Аналогичка ф-ии pos, но писк ведёт с конца строки
-begin
-  if not (Str > '') then begin
-    Result:=0;
-    Exit;
-  end;
-  Result:=Length(Str)+1;
-  Dec(Result, Length(SubStr));
-  while Result > 0 do begin
-    if Copy(Str, Result, Length(SubStr)) = SubStr then Exit;
-    Dec(Result, Length(SubStr));
-  end;
-  Result:=0;
-end;
-
-
-function StringToInt(const S: string): Integer;
-begin
-  try
-    Result := StrToInt(S);
-  except
-    Result := 0;
-  end;
-end;
-
-  procedure DelLastSymb(var S: string; Symb: string = '/');
-  //Удаляет из строки S: string, если найден, последний символ = Symb: string
-  begin
-    if Length(S) <= 0 then Exit;
-    if S[Length(S)] = Symb then
-      Delete(S, Length(S), 1);
-  end;
-
-function NewFN(const OldFN: String; const aOverWriteFile: Boolean = False):String;
-//Формирует на базе OldFN имя нового, не существующего файла.
-//Если aOverWriteFile=True - пытается удалить существующий файл
-var
-  S: String;
-  PosFilePoint, PosLastSlash, PosLast_:Integer;
-
-  function FileExists(const FileName: string): Boolean;
-  begin
-    if aOverWriteFile then begin
-      try
-        Result:=SysUtils.DeleteFile(FileName);
-      except
-        Result := False;
-      end;
-    end;
-    Result:=SysUtils.FileExists(FileName) or DirectoryExists(FileName);
-  end;
-begin
-  Result:=OldFN;
-  DelLastSymb(Result, '\');
-
-  while (FileExists(Result)) do begin
-    PosLastSlash:=Length(Result);
-    S := Result;
-    PosFilePoint:=Length(Result)+1;//-1;
-    while PosLastSlash> 0 do begin
-      if (S[PosLastSlash]='.') and (PosFilePoint>=(Length(Result)+1)) then PosFilePoint:=PosLastSlash
-      else if S[PosLastSlash]='\' then break;
-      Dec(PosLastSlash);
-    end;
-    S:=Copy(Result, PosLastSlash+1, PosFilePoint-PosLastSlash-1);
-    PosLast_:=LastPos('_', S);
-    if PosLast_>0 then begin
-      S:=Copy(S, PosLast_+1, Length(S)-PosLast_);
-      if (S = '') or (StringToInt(S) = 0) then begin
-      //if (S = '') then begin
-        S:=Result;
-        Insert('_1', S, PosFilePoint);
-        Result:=S;
-      end else begin
-        S:= IntToStr(StringToInt(S)+1);
-        S:= S + Copy(Result, PosFilePoint, Length(Result)-PosFilePoint+1);
-        Result:= Concat(Copy(Result, 0, PosLastSlash+PosLast_), S);
-      end;
-    end else begin
-      S:=Result;
-      Insert('_1', S, PosFilePoint);
-      Result:=S;
-//      Edit1.Text:=Edit1.Text+'_1';
-    end;
-  end;
-
-end;
-/// End of Custorm procedures
-
 
 procedure TForm1.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
@@ -166,36 +59,27 @@ begin
 end;
 
 procedure TForm1.OpenFile_B1Click(Sender: TObject);
-var
-  sTmpFN: String;
 begin
   // если файл не выбран, то выходим
-  if (not OD.Execute) or (OD.FileName = '') then begin
-    ShowMessage('Файл не выбран, выходим....');
-    exit;
-  end;
-  sTmpFN := ChangeFileExt(od.FileName, ' doc_dublicate.docx');
-  sTmpFN := NewFN(sTmpFN);
+  { if (not OD.Execute) or (OD.FileName = '') then
+    exit; }
 
   // загружаем тестовый документ
   W := CreateOleObject('Word.Application');
-  W.Documents.Open(OD.FileName, EmptyParam, True);
-  //W.Documents.Open('C:\Users\Public\Documents\Практика\test doc.docx',
-  //  EmptyParam, True);
+  // W.Documents.Open(OD.FileName, EmptyParam, True);
+  W.Documents.Open('C:\Users\Public\Documents\Практика\test doc.docx',
+    EmptyParam, True);
   W.activedocument.SaveAs
-    //('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
-    (sTmpFN);
+    ('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
   W.activedocument.close;
   W.Documents.Open
-    //('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
-    (sTmpFN);
+    ('C:\Users\Public\Documents\Практика\test doc_dublicate.docx');
   // W.Visible := True;
   // 'C:\Users\Public\Documents\Практика\Win32\Debug\test doc.docx'
   // пишем путь
   // FileName1.Text := OD.FileName;
   FileName1.Text :=
-    //'C:\Users\Public\Documents\Практика\Win32\Debug\test doc.docx';
-    OD.FileName;
+    'C:\Users\Public\Documents\Практика\Win32\Debug\test doc.docx';
 end;
 
 procedure TForm1.CreateHTML_BClick(Sender: TObject);
@@ -212,12 +96,10 @@ end;
 procedure TForm1.CreateHTMLFile;
 begin
   // очищаем
-  HTMLFile.BeginUpdate;
   HTMLFile.Clear;
   // обращаемся к "html"
   with HTMLFile do
   begin
-    contents();
     // пишем заголовок
     Add('<html>');
     Add('<head>');
@@ -226,10 +108,10 @@ begin
     Add('<body>');
     // наполняем body
     WordParsing;
+    Memo1.lines.Add('thats all');
     Add('</body>');
     Add('</html>');
   end;
-  HTMLFile.EndUpdate;
 end;
 
 procedure TForm1.WordParsing;
@@ -242,17 +124,13 @@ var
 begin
   listFlag := False; // флаг для проверки списков
   TableCount := 1; // инициализируем счетчик таблиц
-  PictureCount := 1; //текущая картинка
   CurTable := 1; // текущая таблица
-
 
   // цикл по абзацам
   for i := 1 to W.activedocument.Paragraphs.Count do
   begin
-    wordrange := W.activedocument.range(
-    W.activedocument.Paragraphs.Item(i).range.start, 
-    W.activedocument.Paragraphs.Item(i).range.end - 1); // абзац
-    
+    wordrange := W.activedocument.Paragraphs.Item(i).range; // абзац
+
     AlignNumb := W.activedocument.Paragraphs.Item(i).Alignment;
     case AlignNumb of
     0:
@@ -265,6 +143,7 @@ begin
     AlignName := 'Justify'
     end;
 
+    wordrange := W.activedocument.Paragraphs.Item(i).range; // абзац
 
     curFontName := string('face = "' + string(wordrange.formattedText.Font.Name)
       + '"'); // название шрифта
@@ -282,21 +161,20 @@ begin
     end;
 
     // если текст жирный, передать абзац в функцию
-    if (wordrange.formattedText.bold <> 0) and (wordrange.Tables.Count = 0) then
+    if wordrange.formattedText.bold <> 0 then
       ParagraphParsing(wordrange);
 
     // если текущий шрифт не совпадает с предыдущим
     if (curFontName <> FontName) or (curFontSize <> FontSize) then
     begin
-      wordrange.select;
-
-      w.selection.insertbefore('<font ' + curFontName + '" size = "' +
+      wordrange.insertbefore('<font ' + curFontName + '" size = "' +
         intTOstr(curFontSize) + '">');
       if i <> 1 then
-        w.selection.insertbefore('</font>');
+        wordrange.insertbefore('</font>');
       FontName := curFontName;
       FontSize := curFontSize;
-    end;  
+    end;
+
     //если ныняшняя таблица закончилась, меняем CurTable
     if (CurTable <> TableCount) and (wordrange.Tables.Count = 0) then
     begin
@@ -328,15 +206,8 @@ begin
       listFlag := False;
     end;
 
-    //если параграф картинка
-    if wordrange.InlineShapes.Count > 0 then
-    begin
-    picture();
-    PictureCount := PictureCount + 1;
-    end;
 
-    HTMLFile.Append('<p ALIGN = "' + AlignName + '">' + 
-    string(W.activedocument.Paragraphs.Item(i).range.Text) + '</p>');
+    HTMLFile.Append('<p ALIGN = "' + AlignName + '">' + string(wordrange.Text) + '</p>');
 
   end;
   HTMLFile.Append('</font>');
@@ -348,7 +219,7 @@ var
   i: integer;
   isBold: integer;
 begin
-  Flag := False;
+  Memo1.lines.Add('gogo');
   // обратный цикл по словам в параграфе
   for i := paragraph.words.Count downto 1 do
   begin
@@ -408,32 +279,20 @@ begin
   TableCount := TableCount + 1;
 end;
 
-procedure TForm1.Contents();
-var
-i: integer;
-link: variant;
-begin
-
-  for i := 1 to w.activedocument.hyperlinks.count do
-  begin
-      link := w.activedocument.hyperlinks.item(i);
-      link.range.insertbefore('<a HREF = "#' + intToStr(i) + '">');
-      link.range.insertafter('</a>');
-      link.follow;
-      w.selection.insertbefore('<a NAME = "#'+ intToStr(i) + '">');
-      w.selection.insertafter('</a>');
-  end;
-
-
-end;
-
-procedure TForm1.Picture();
-var i: integer;
-
-begin
-     htmlFile.Add('<img src = "' + w.activedocument.InlineShapes.Item(PictureCount).
-     LinkFormat.SourceFullName + '">');
-end;
-
 end.
 
+{
+  Надо сделать:
+  1. оглавление
+  2. типы списков
+  3. таблицы
+  4. картинки
+  5. косметика (выравнивание)
+}
+
+{
+hyperlinks(item)
+.follow
+.range.text
+.add anchor
+}

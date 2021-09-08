@@ -268,7 +268,10 @@ begin
 
     curFontName := string('face = "' + string(wordrange.formattedText.Font.Name)
       + '"'); // название шрифта
-    curFontSize := strTOInt(varToStr(wordrange.formattedText.Font.Size)); // название шрифта
+    //curFontSize := strTOInt(varToStr(wordrange.formattedText.Font.Size)); // название шрифта
+    //2021-09-08 Slava: wordrange.formattedText.Font.Size - дробный, а curFontSize: integer - округлим
+    curFontSize := Round(StrToFloat(varToStr(wordrange.formattedText.Font.Size))); // название шрифта
+
 
     case curFontSize of
     12:
